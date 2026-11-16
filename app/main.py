@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from app.controllers import auth, catalog, subscription
 
 from app.controllers import auth, catalog
 from app.services.exceptions import (
@@ -42,3 +43,7 @@ app.include_router(catalog.router)
 @app.get("/api/health", tags=["system"])
 def health():
     return {"status": "ok"}
+
+app.include_router(auth.router)
+app.include_router(catalog.router)
+app.include_router(subscription.router)

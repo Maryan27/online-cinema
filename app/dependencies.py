@@ -13,6 +13,10 @@ from app.services.exceptions import AuthenticationError, PermissionDeniedError
 from app.repositories import CountryRepository, GenreRepository, MediaRepository
 from app.services.catalog import CatalogService
 
+from app.patterns.adapter import FakePaymentProvider, PaymentGateway, PaymentProviderAdapter
+from app.repositories import PaymentRepository, SubscriptionRepository
+from app.services.subscription import SubscriptionService
+
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
@@ -36,3 +40,15 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     if not user.is_admin():
         raise PermissionDeniedError("Administrator access required")
     return user
+
+def get_payment_gateway() -> PaymentGateway:
+    return PaymentProviderAdapter(FakePaymentProvider())
+
+
+def get_subscription_service(
+    db: Session = Depends(get_db),
+    gateway: PaymentGateway = Depends(get_payment_gateway),
+) -> SubscriptionService:
+    return SubscriptionService(
+        gateway, SubscriptionRepository(db), PlanRepository(db), PaymentRepository(db)
+    )

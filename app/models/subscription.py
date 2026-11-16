@@ -11,7 +11,8 @@ from app.models.enums import PaymentStatus, PlanType
 
 if TYPE_CHECKING:
     from app.models.user import User
-    
+    from app.patterns.state import SubscriptionState
+
 class SubscriptionPlan(Base):
     __tablename__ = "subscription_plans"
 
@@ -42,6 +43,18 @@ class Subscription(Base):
     def is_active(self) -> bool:
         """Information Expert: the subscription itself knows whether it is active."""
         return self.expires_at is None or self.expires_at > utcnow()
+
+    def get_state(self) -> "SubscriptionState":
+        """State pattern — Context: behaviour is delegated to the current state object."""
+        from app.patterns.state import state_for  # local import avoids a circular import
+
+        return state_for(self.plan.type)
+
+    def upgrade(self, premium_plan: SubscriptionPlan) -> None:
+        self.get_state().upgrade(self, premium_plan)
+
+    def expire(self, free_plan: SubscriptionPlan) -> None:
+        self.get_state().expire(self, free_plan)
 
 
 class Payment(Base):
