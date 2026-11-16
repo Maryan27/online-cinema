@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kickoff Cinema — Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/api.js" defer></script>
+  <script src="/js/layout.js" defer></script>
+  <script src="/js/player.js" defer></script>
+</head>
+<body>
+  <header id="site-header" class="site-header"></header>
+
+  <main class="container">
+    <p><a id="back-link" class="muted" href="/">← Back</a></p>
+    <h1 id="player-title">Loading…</h1>
+    <p id="player-subtitle" class="muted"></p>
+    <div id="player-error"></div>
+
+    <div class="player">
+      <video id="video" playsinline></video>
+      <span id="ad-badge" class="ad-badge hidden">Ad</span>
+      <button id="start-button" class="player__start hidden" type="button" aria-label="Play">▶</button>
+    </div>
+
+    <div class="player-bar">
+      <span class="muted small">Quality</span>
+      <div id="qualities" class="qualities"></div>
+    </div>
+    <div id="player-notice" class="message hidden"></div>
+  </main>
+</body>
+</html>
