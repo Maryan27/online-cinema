@@ -9,8 +9,9 @@ from app.models.common import utcnow
 from app.models.enums import Role
 
 if TYPE_CHECKING:
+    from app.models.activity import Favorite, WatchHistory
     from app.models.subscription import Payment, Subscription
-    
+
 class User(Base):
     __tablename__ = "users"
 
@@ -25,6 +26,13 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     payments: Mapped[list["Payment"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+
+    favorites: Mapped[list["Favorite"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    watch_history: Mapped[list["WatchHistory"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 

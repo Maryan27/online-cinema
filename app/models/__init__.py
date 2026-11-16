@@ -11,6 +11,7 @@ from app.models.media import (
     Series,
     VideoFile,
 )
+from app.models.activity import Favorite, WatchHistory
 
 __all__ = [
     "User",
@@ -26,4 +27,6 @@ __all__ = [
     "Season",
     "Episode",
     "VideoFile",
+    "Favorite",
+    "WatchHistory",
 ]
