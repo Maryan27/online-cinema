@@ -206,3 +206,39 @@ label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 
 .auth-switch a { color: var(--accent); }
 .demo-accounts { margin-top: 20px; font-size: 0.85rem; }
 .demo-accounts code { color: var(--text); }
+
+/* ---------- media details ---------- */
+.details {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+@media (max-width: 720px) {
+  .details { grid-template-columns: 1fr; }
+  .details__poster { max-width: 240px; }
+}
+.details__poster .poster__title { font-size: 2rem; }
+.details__description { font-size: 1.05rem; max-width: 65ch; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0 8px; }
+.small { font-size: 0.85rem; }
+
+.episode-list { display: grid; gap: 8px; margin-bottom: 24px; }
+.episode {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.episode__number {
+  width: 32px;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--accent);
+  text-align: center;
+}
+.episode__info { flex: 1; }
