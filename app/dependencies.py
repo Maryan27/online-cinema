@@ -17,6 +17,11 @@ from app.patterns.adapter import FakePaymentProvider, PaymentGateway, PaymentPro
 from app.repositories import PaymentRepository, SubscriptionRepository
 from app.services.subscription import SubscriptionService
 
+from app.config import AD_VIDEO_URL
+from app.patterns.proxy import IVideoStream, ProtectedVideoProxy, RealVideoStream
+from app.repositories import WatchHistoryRepository
+from app.services.video import VideoService
+
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
@@ -52,3 +57,19 @@ def get_subscription_service(
     return SubscriptionService(
         gateway, SubscriptionRepository(db), PlanRepository(db), PaymentRepository(db)
     )
+
+def get_video_stream(
+    subscriptions: SubscriptionService = Depends(get_subscription_service),
+) -> IVideoStream:
+    return ProtectedVideoProxy(
+        RealVideoStream(),
+        state_provider=subscriptions.get_state,
+        ad_url=AD_VIDEO_URL,
+    )
+
+
+def get_video_service(
+    db: Session = Depends(get_db),
+    stream: IVideoStream = Depends(get_video_stream),
+) -> VideoService:
+    return VideoService(stream, MediaRepository(db), WatchHistoryRepository(db))
