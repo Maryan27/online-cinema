@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-
 from app.controllers import auth, catalog, player, subscription, users
+from app.controllers import admin, auth, catalog, player, subscription, users
 
 from app.config import MEDIA_DIR
 from app.controllers import auth, catalog, player, subscription
@@ -42,9 +42,10 @@ app.include_router(auth.router)
 app.include_router(catalog.router)
 app.include_router(subscription.router)
 app.include_router(player.router)
-
 app.include_router(player.router)
 app.include_router(users.router)
+app.include_router(users.router)
+app.include_router(admin.router)
 
 
 @app.get("/api/health", tags=["system"])

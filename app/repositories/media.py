@@ -6,6 +6,7 @@ from sqlalchemy import func, select
 from app.models import Country, Episode, Genre, MediaContent, Movie
 from app.patterns.builder import MediaQuery
 from app.repositories.base import BaseRepository
+from app.models import Country, Episode, Genre, MediaContent, Movie, Season, Series
 
 
 class MediaRepository(BaseRepository[MediaContent]):
@@ -61,6 +62,12 @@ class MediaRepository(BaseRepository[MediaContent]):
         if exclude_ids:
             stmt = stmt.where(MediaContent.id.not_in(exclude_ids))
         return list(self.db.scalars(stmt))
+
+    def get_series(self, series_id: int) -> Optional[Series]:
+        return self.db.get(Series, series_id)
+
+    def get_season(self, season_id: int) -> Optional[Season]:
+        return self.db.get(Season, season_id)
 
 
 class GenreRepository(BaseRepository[Genre]):

@@ -28,6 +28,8 @@ from app.services.recommendation import RecommendationService
 from app.services.subscription import SubscriptionService
 from app.services.user import UserService
 from app.services.video import VideoService
+from app.patterns.template_method import ReportFactory
+from app.services.admin import AdminService
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -82,6 +84,14 @@ def get_recommendation_service(db: Session = Depends(get_db)) -> RecommendationS
         history_repo,
         GenreBasedStrategy(history_repo, media_repo),
         TopRatedStrategy(media_repo),
+    )
+def get_admin_service(db: Session = Depends(get_db)) -> AdminService:
+    return AdminService(
+        MediaRepository(db),
+        GenreRepository(db),
+        CountryRepository(db),
+        PlanRepository(db),
+        ReportFactory(WatchHistoryRepository(db), PaymentRepository(db)),
     )
 
 
