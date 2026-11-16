@@ -10,11 +10,17 @@ from app.repositories import PlanRepository, UserRepository
 from app.services.auth import AuthService
 from app.services.exceptions import AuthenticationError, PermissionDeniedError
 
+from app.repositories import CountryRepository, GenreRepository, MediaRepository
+from app.services.catalog import CatalogService
+
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     return AuthService(UserRepository(db), PlanRepository(db))
+
+def get_catalog_service(db: Session = Depends(get_db)) -> CatalogService:
+    return CatalogService(MediaRepository(db), GenreRepository(db), CountryRepository(db))
 
 
 def get_current_user(

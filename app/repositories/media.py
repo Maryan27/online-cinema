@@ -1,9 +1,10 @@
 from collections.abc import Iterable
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.models import Country, Episode, Genre, MediaContent, Movie
+from app.patterns.builder import MediaQuery
 from app.repositories.base import BaseRepository
 
 
@@ -15,6 +16,28 @@ class MediaRepository(BaseRepository[MediaContent]):
 
     def get_episode(self, episode_id: int) -> Optional[Episode]:
         return self.db.get(Episode, episode_id)
+
+    def find(self, query: MediaQuery) -> tuple[list[MediaContent], int]:
+        """Return one page of media matching the query and the total number of matches."""
+        stmt = select(MediaContent)
+        if query.title:
+            stmt = stmt.where(MediaContent.title.ilike(f"%{query.title}%"))
+        if query.genre_id is not None:
+            stmt = stmt.where(MediaContent.genres.any(Genre.id == query.genre_id))
+        if query.year is not None:
+            stmt = stmt.where(MediaContent.release_year == query.year)
+        if query.country_id is not None:
+            stmt = stmt.where(MediaContent.countries.any(Country.id == query.country_id))
+        if query.media_type:
+            stmt = stmt.where(MediaContent.kind == query.media_type)
+
+        total = self.db.scalar(select(func.count()).select_from(stmt.subquery()))
+        items = self.db.scalars(
+            stmt.order_by(MediaContent.rating.desc(), MediaContent.title)
+            .offset(query.offset)
+            .limit(query.page_size)
+        )
+        return list(items), total
 
     def top_rated(self, limit: int = 10, exclude_ids: Iterable[int] = ()) -> list[MediaContent]:
         stmt = select(MediaContent).order_by(MediaContent.rating.desc()).limit(limit)

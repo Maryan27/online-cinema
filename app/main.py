@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.controllers import auth
+from app.controllers import auth, catalog
 from app.services.exceptions import (
     AlreadyExistsError,
     AuthenticationError,
@@ -17,6 +17,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
+# Maps business-logic errors to HTTP status codes in one place
 ERROR_STATUS_CODES = {
     NotFoundError: 404,
     AlreadyExistsError: 409,
@@ -35,6 +36,7 @@ async def handle_service_error(request: Request, exc: ServiceError):
 
 
 app.include_router(auth.router)
+app.include_router(catalog.router)
 
 
 @app.get("/api/health", tags=["system"])
