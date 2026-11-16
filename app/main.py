@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from app.controllers import auth, catalog, player, subscription, users
 from app.controllers import admin, auth, catalog, player, subscription, users
 
-from app.config import MEDIA_DIR
+from app.config import FRONTEND_DIR, MEDIA_DIR
 from app.controllers import auth, catalog, player, subscription
 from app.services.exceptions import (
     AlreadyExistsError,
@@ -55,3 +55,4 @@ def health():
 
 MEDIA_DIR.mkdir(exist_ok=True)  # empty folders are not stored in Git
 app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

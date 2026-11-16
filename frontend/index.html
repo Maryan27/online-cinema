@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kickoff Cinema — Catalog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/api.js" defer></script>
+  <script src="/js/layout.js" defer></script>
+  <script src="/js/catalog.js" defer></script>
+</head>
+<body>
+  <header id="site-header" class="site-header"></header>
+
+  <main class="container">
+    <section id="recommendations" class="section hidden">
+      <div class="section-head">
+        <h2>Recommended for you</h2>
+        <span id="strategy-tag" class="tag"></span>
+      </div>
+      <div id="recommendations-grid" class="grid"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h1>Catalog</h1>
+        <span id="page-info" class="muted"></span>
+      </div>
+
+      <form id="filters" class="filters">
+        <div>
+          <label for="title">Search</label>
+          <input id="title" name="title" type="search" placeholder="Title…">
+        </div>
+        <div>
+          <label for="genre_id">Genre</label>
+          <select id="genre_id" name="genre_id"><option value="">All</option></select>
+        </div>
+        <div>
+          <label for="country_id">Country</label>
+          <select id="country_id" name="country_id"><option value="">All</option></select>
+        </div>
+        <div>
+          <label for="year">Year</label>
+          <input id="year" name="year" type="number" min="1888" max="2100" placeholder="Any">
+        </div>
+        <div>
+          <label for="type">Type</label>
+          <select id="type" name="type">
+            <option value="">All</option>
+            <option value="movie">Movies</option>
+            <option value="series">Series</option>
+          </select>
+        </div>
+        <button class="btn" type="submit">Search</button>
+        <button class="btn secondary" type="reset">Reset</button>
+      </form>
+
+      <div id="catalog-grid" class="grid"></div>
+
+      <div class="pagination">
+        <button id="prev-page" class="btn secondary" type="button">← Previous</button>
+        <button id="next-page" class="btn secondary" type="button">Next →</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
