@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kickoff Cinema — Log in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/api.js" defer></script>
+  <script src="/js/layout.js" defer></script>
+  <script src="/js/auth.js" defer></script>
+</head>
+<body>
+  <header id="site-header" class="site-header"></header>
+
+  <main class="container">
+    <div class="panel auth-card">
+      <h1>Log in</h1>
+      <div id="form-message"></div>
+
+      <form id="auth-form" data-mode="login">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn" type="submit">Log in</button>
+      </form>
+
+      <p class="auth-switch">New here? <a href="/register.html">Create an account</a></p>
+
+      <div class="demo-accounts muted">
+        Demo accounts:<br>
+        <code>user@cinema.local</code> / <code>user123</code> — Free<br>
+        <code>premium@cinema.local</code> / <code>premium123</code> — Premium<br>
+        <code>admin@cinema.local</code> / <code>admin123</code> — Admin
+      </div>
+    </div>
+  </main>
+</body>
+</html>

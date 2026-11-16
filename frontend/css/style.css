@@ -198,3 +198,11 @@ label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 
   border: 1px dashed var(--border);
   border-radius: var(--radius);
 }
+
+/* ---------- auth pages ---------- */
+.auth-card { max-width: 420px; margin: 24px auto; }
+.auth-card .btn[type="submit"] { width: 100%; margin-top: 6px; }
+.auth-switch { margin-top: 16px; text-align: center; color: var(--muted); }
+.auth-switch a { color: var(--accent); }
+.demo-accounts { margin-top: 20px; font-size: 0.85rem; }
+.demo-accounts code { color: var(--text); }
