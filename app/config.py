@@ -2,3 +2,6 @@ import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cinema.db")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
+
+JWT_ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
