@@ -89,3 +89,8 @@ class MediaDetailsResponse(MediaShortResponse):
             countries=[CountryResponse.model_validate(c) for c in media.countries],
             **extra,
         )
+
+
+class RecommendationsResponse(BaseModel):
+    strategy: str
+    items: list[MediaShortResponse]

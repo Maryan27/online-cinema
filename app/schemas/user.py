@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models import User
 from app.models.enums import PlanType, Role
@@ -26,3 +26,8 @@ class UserResponse(BaseModel):
             plan=subscription.plan.type if subscription else None,
             premium_until=subscription.expires_at if subscription else None,
         )
+
+
+class ProfileUpdateRequest(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    password: Optional[str] = Field(None, min_length=6, max_length=128)
