@@ -302,3 +302,30 @@ label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 
   font-weight: 600;
 }
 .quality:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- profile ---------- */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+@media (max-width: 800px) {
+  .profile-grid { grid-template-columns: 1fr; }
+}
+.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.plan {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.plan.current { border-color: var(--accent); }
+.plan.premium .plan__name { color: var(--gold); }
+.plan__name { font-family: var(--font-display); font-size: 1.5rem; text-transform: uppercase; }
+.plan__price { font-size: 1.6rem; font-weight: 700; margin: 4px 0 10px; }
+.plan ul { margin: 0 0 16px; padding-left: 18px; color: var(--muted); font-size: 0.9rem; }
+.plan .btn { width: 100%; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }

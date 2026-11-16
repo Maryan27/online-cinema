@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kickoff Cinema — Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/api.js" defer></script>
+  <script src="/js/layout.js" defer></script>
+  <script src="/js/profile.js" defer></script>
+</head>
+<body>
+  <header id="site-header" class="site-header"></header>
+
+  <main class="container">
+    <h1>My profile</h1>
+
+    <div class="profile-grid">
+      <section class="panel">
+        <h2>Subscription</h2>
+        <div id="subscription-message"></div>
+        <dl id="subscription-facts" class="facts"></dl>
+        <div id="plans" class="plans"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Account</h2>
+        <div id="profile-message"></div>
+        <form id="profile-form">
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" disabled>
+          </div>
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" name="name" maxlength="100" required>
+          </div>
+          <div class="field">
+            <label for="password">New password</label>
+            <input id="password" name="password" type="password" minlength="6"
+                   autocomplete="new-password" placeholder="Leave empty to keep the current one">
+          </div>
+          <button class="btn" type="submit">Save changes</button>
+        </form>
+      </section>
+    </div>
+
+    <section class="section">
+      <h2>My favorites</h2>
+      <div id="favorites-grid" class="grid"></div>
+    </section>
+  </main>
+</body>
+</html>
