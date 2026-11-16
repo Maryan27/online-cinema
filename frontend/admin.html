@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kickoff Cinema — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/api.js" defer></script>
+  <script src="/js/layout.js" defer></script>
+  <script src="/js/admin.js" defer></script>
+</head>
+<body>
+  <header id="site-header" class="site-header"></header>
+
+  <main class="container">
+    <h1>Admin panel</h1>
+    <div id="admin-guard"></div>
+
+    <div id="admin-app" class="hidden">
+      <nav class="tabs">
+        <button class="tab active" type="button" data-tab="reports">Reports</button>
+        <button class="tab" type="button" data-tab="content">Content</button>
+        <button class="tab" type="button" data-tab="plans">Plans</button>
+      </nav>
+
+      <!-- ===================== reports ===================== -->
+      <section id="tab-reports" class="tab-panel">
+        <form id="report-form" class="filters report-filters">
+          <div>
+            <label for="r-type">Report</label>
+            <select id="r-type" name="type">
+              <option value="popularity">Most popular titles and genres</option>
+              <option value="activity">User activity</option>
+              <option value="revenue">Subscription revenue</option>
+            </select>
+          </div>
+          <div>
+            <label for="r-start">From</label>
+            <input id="r-start" name="start" type="date" required>
+          </div>
+          <div>
+            <label for="r-end">To</label>
+            <input id="r-end" name="end" type="date" required>
+          </div>
+          <button class="btn" type="submit">Generate</button>
+        </form>
+        <div id="report-output"></div>
+      </section>
+
+      <!-- ===================== content ===================== -->
+      <section id="tab-content" class="tab-panel hidden">
+        <div class="admin-columns">
+          <div class="panel">
+            <h2 id="media-form-title">Add title</h2>
+            <div id="media-form-message"></div>
+            <form id="media-form">
+              <input type="hidden" name="id">
+              <div class="form-row">
+                <div class="field">
+                  <label for="m-kind">Type</label>
+                  <select id="m-kind" name="kind">
+                    <option value="movie">Movie</option>
+                    <option value="series">Series</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="m-year">Year</label>
+                  <input id="m-year" name="release_year" type="number" min="1888" max="2100" required>
+                </div>
+              </div>
+              <div class="field">
+                <label for="m-title">Title</label>
+                <input id="m-title" name="title" maxlength="200" required>
+              </div>
+              <div class="field">
+                <label for="m-description">Description</label>
+                <textarea id="m-description" name="description" rows="3"></textarea>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="m-rating">Rating (0–10)</label>
+                  <input id="m-rating" name="rating" type="number" min="0" max="10" step="0.1">
+                </div>
+                <div id="movie-fields" class="field">
+                  <label for="m-duration">Duration, min</label>
+                  <input id="m-duration" name="duration_minutes" type="number" min="1">
+                </div>
+              </div>
+              <div id="clip-field" class="field">
+                <label for="m-clip">Video clip</label>
+                <select id="m-clip" name="clip"></select>
+              </div>
+              <div class="field">
+                <label>Genres</label>
+                <div id="genre-checks" class="checks"></div>
+              </div>
+              <div class="field">
+                <label>Countries</label>
+                <div id="country-checks" class="checks"></div>
+              </div>
+              <div class="actions">
+                <button class="btn" type="submit">Save</button>
+                <button id="cancel-edit" class="btn secondary hidden" type="button">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel">
+            <h2>Add episode</h2>
+            <div id="episode-message"></div>
+            <form id="episode-form">
+              <div class="field">
+                <label for="e-series">Series</label>
+                <select id="e-series" name="series" required></select>
+              </div>
+              <div class="field">
+                <label for="e-season">Season</label>
+                <select id="e-season" name="season"><option value="">—</option></select>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="e-number">Episode number</label>
+                  <input id="e-number" name="number" type="number" min="1" required>
+                </div>
+                <div class="field">
+                  <label for="e-duration">Duration, min</label>
+                  <input id="e-duration" name="duration_minutes" type="number" min="1" value="10" required>
+                </div>
+              </div>
+              <div class="field">
+                <label for="e-title">Title</label>
+                <input id="e-title" name="title" maxlength="200" required>
+              </div>
+              <div class="field">
+                <label for="e-clip">Video clip</label>
+                <select id="e-clip" name="clip"></select>
+              </div>
+              <button class="btn" type="submit">Add episode</button>
+              <p class="muted small">To add a season, use “+ Season” next to the series in the table below.</p>
+            </form>
+          </div>
+        </div>
+
+        <h2>Catalog</h2>
+        <div id="media-message"></div>
+        <div class="table-wrap"><table id="media-table" class="table"></table></div>
+        <input id="poster-input" class="hidden" type="file" accept=".jpg,.jpeg,.png,.webp">
+      </section>
+
+      <!-- ===================== plans ===================== -->
+      <section id="tab-plans" class="tab-panel hidden">
+        <div id="plans-message"></div>
+        <div id="plans-admin" class="plans"></div>
+        <div class="panel" style="margin-top: 24px">
+          <h2>Maintenance</h2>
+          <p class="muted">Move every Premium subscription whose period has ended back to the Free plan.</p>
+          <button id="expire-button" class="btn secondary" type="button">Expire overdue subscriptions</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

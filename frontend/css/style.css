@@ -329,3 +329,57 @@ label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 
 .facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; }
+
+/* ---------- admin ---------- */
+.tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.report-filters { grid-template-columns: 2fr 1fr 1fr auto; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.stat__value { font-family: var(--font-display); font-size: 2rem; }
+.stat__label { color: var(--muted); font-size: 0.85rem; }
+
+.chart { display: grid; gap: 8px; margin-bottom: 24px; }
+.bar-row { display: grid; grid-template-columns: 220px 1fr 70px; gap: 12px; align-items: center; font-size: 0.9rem; }
+.bar { height: 14px; min-width: 2px; border-radius: 999px; background: var(--accent); }
+
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.table th, .table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.table th { color: var(--muted); font-weight: 500; }
+.table .btn { padding: 6px 10px; font-size: 0.85rem; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.admin-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px; }
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.check input { width: auto; }
+.plan input { margin-bottom: 10px; }
+
+@media (max-width: 900px) {
+  .admin-columns, .report-filters { grid-template-columns: 1fr; }
+  .bar-row { grid-template-columns: 120px 1fr 50px; }
+}

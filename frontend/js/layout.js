@@ -53,10 +53,12 @@ async function renderHeader() {
 
   const links = [`<a href="/">Catalog</a>`];
   if (user) {
-    links.push(
-      `<a href="/profile.html">${UI.escape(user.name)}
-         <span class="plan-badge ${user.plan}">${user.plan}</span></a>`
-    );
+    // Administrators see their role instead of a subscription plan
+    const badge =
+      user.role === "admin"
+        ? `<span class="plan-badge">admin</span>`
+        : `<span class="plan-badge ${user.plan}">${user.plan}</span>`;
+    links.push(`<a href="/profile.html">${UI.escape(user.name)} ${badge}</a>`);
     if (user.role === "admin") links.push(`<a href="/admin.html">Admin</a>`);
     links.push(`<a href="#" id="logout-link">Log out</a>`);
   } else {
