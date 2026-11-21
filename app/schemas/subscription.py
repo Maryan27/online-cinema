@@ -20,6 +20,7 @@ class SubscriptionResponse(BaseModel):
     plan: PlanType
     started_at: datetime
     expires_at: Optional[datetime]
+    auto_renew: bool
     requires_ad: bool
     max_quality: VideoQuality
 
@@ -30,6 +31,7 @@ class SubscriptionResponse(BaseModel):
             plan=subscription.plan.type,
             started_at=subscription.started_at,
             expires_at=subscription.expires_at,
+            auto_renew=subscription.auto_renew,
             requires_ad=state.requires_ad(),
             max_quality=state.max_quality(),
         )

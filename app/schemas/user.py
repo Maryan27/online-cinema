@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from app.models import User
 from app.models.enums import PlanType, Role
+from app.schemas.auth import PASSWORD_MIN_LENGTH
 
 
 class UserResponse(BaseModel):
@@ -30,4 +31,4 @@ class UserResponse(BaseModel):
 
 class ProfileUpdateRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
-    password: Optional[str] = Field(None, min_length=6, max_length=128)
+    password: Optional[str] = Field(None, min_length=PASSWORD_MIN_LENGTH, max_length=128)

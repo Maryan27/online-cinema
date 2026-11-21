@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.patterns.state import SubscriptionState
 
+
 class SubscriptionPlan(Base):
     __tablename__ = "subscription_plans"
 
@@ -36,6 +37,8 @@ class Subscription(Base):
     plan_id: Mapped[int] = mapped_column(ForeignKey("subscription_plans.id"))
     started_at: Mapped[datetime] = mapped_column(default=utcnow)
     expires_at: Mapped[Optional[datetime]] = mapped_column(default=None)
+    # Premium is renewed automatically when the paid period ends, unless the user cancels
+    auto_renew: Mapped[bool] = mapped_column(default=True)
 
     user: Mapped["User"] = relationship(back_populates="subscription")
     plan: Mapped[SubscriptionPlan] = relationship()
@@ -55,6 +58,12 @@ class Subscription(Base):
 
     def expire(self, free_plan: SubscriptionPlan) -> None:
         self.get_state().expire(self, free_plan)
+
+    def cancel(self) -> None:
+        self.get_state().cancel(self)
+
+    def renew(self, premium_plan: SubscriptionPlan) -> None:
+        self.get_state().renew(self, premium_plan)
 
 
 class Payment(Base):

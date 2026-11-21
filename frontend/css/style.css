@@ -383,3 +383,14 @@ label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 
   .admin-columns, .report-filters { grid-template-columns: 1fr; }
   .bar-row { grid-template-columns: 120px 1fr 50px; }
 }
+
+/* ---------- password show/hide ---------- */
+.password-field { position: relative; }
+.password-field input { width: 100%; padding-right: 44px; }
+.password-toggle {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer;
+}
+.password-toggle:hover { color: var(--text); }
+input::-ms-reveal, input::-ms-clear { display: none; }

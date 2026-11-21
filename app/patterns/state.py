@@ -34,6 +34,14 @@ class SubscriptionState(ABC):
         self, subscription: "Subscription", free_plan: "SubscriptionPlan"
     ) -> "SubscriptionState": ...
 
+    @abstractmethod
+    def cancel(self, subscription: "Subscription") -> "SubscriptionState": ...
+
+    @abstractmethod
+    def renew(
+        self, subscription: "Subscription", premium_plan: "SubscriptionPlan"
+    ) -> "SubscriptionState": ...
+
     def allows_quality(self, quality: VideoQuality) -> bool:
         return quality.height <= self.max_quality().height
 
@@ -54,10 +62,17 @@ class FreeState(SubscriptionState):
         subscription.plan = premium_plan
         subscription.started_at = now
         subscription.expires_at = now + timedelta(days=premium_plan.duration_days)
-        return PremiumState()
+        subscription.auto_renew = True
+        return state_for(PlanType.PREMIUM)
 
     def expire(self, subscription, free_plan) -> SubscriptionState:
         raise InvalidStateTransition("Subscription is already free")
+
+    def cancel(self, subscription) -> SubscriptionState:
+        raise InvalidStateTransition("Subscription is already free")
+
+    def renew(self, subscription, premium_plan) -> SubscriptionState:
+        raise InvalidStateTransition("Only a Premium subscription can be renewed")
 
 
 class PremiumState(SubscriptionState):
@@ -72,13 +87,31 @@ class PremiumState(SubscriptionState):
         return VideoQuality.Q1080P
 
     def upgrade(self, subscription, premium_plan) -> SubscriptionState:
-        raise InvalidStateTransition("Premium subscription is already active")
+        if subscription.auto_renew:
+            raise InvalidStateTransition("Premium subscription is already active")
+        # Cancelled but still paid: subscribing again only turns auto-renewal back on
+        subscription.auto_renew = True
+        return self
 
     def expire(self, subscription, free_plan) -> SubscriptionState:
         subscription.plan = free_plan
         subscription.started_at = utcnow()
         subscription.expires_at = None
-        return FreeState()
+        subscription.auto_renew = True
+        return state_for(PlanType.FREE)
+
+    def cancel(self, subscription) -> SubscriptionState:
+        if not subscription.auto_renew:
+            raise InvalidStateTransition("Premium subscription is already cancelled")
+        # Premium stays until the end of the paid period, it just will not be renewed
+        subscription.auto_renew = False
+        return self
+
+    def renew(self, subscription, premium_plan) -> SubscriptionState:
+        now = utcnow()
+        subscription.started_at = now
+        subscription.expires_at = now + timedelta(days=premium_plan.duration_days)
+        return self
 
 
 _STATES: dict[PlanType, SubscriptionState] = {

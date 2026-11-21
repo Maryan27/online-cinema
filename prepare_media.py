@@ -1,8 +1,11 @@
 """Prepare demo video files in three qualities plus the ad clip.
 
-For every open-movie clip used in seed.py:
-  * if media/sources/<slug>.<ext> exists, a 60-second fragment is cut from it;
-  * otherwise a colourful test-pattern video is generated as a placeholder.
+For every clip used in seed.py (open movies and football stock clips):
+  * if media/sources/<slug>.<ext> exists, a fragment of up to 60 seconds is cut from it
+    (open movies from 0:30, short football stock clips from the start);
+  * otherwise the clip borrows one of the real sources that do exist, so every title
+    plays real footage; a test pattern is generated only when media/sources is empty.
+The ad clip is copied from media/sources/ad.mp4 when it exists.
 
 Requires ffmpeg on PATH.
 
@@ -18,7 +21,7 @@ from typing import Optional
 
 from app.config import MEDIA_DIR
 from app.models.enums import VideoQuality
-from seed import OPEN_MOVIES, slugify
+from seed import FOOTBALL_CLIPS, OPEN_MOVIES, slugify
 
 SOURCES_DIR = MEDIA_DIR / "sources"
 VIDEOS_DIR = MEDIA_DIR / "videos"
@@ -45,9 +48,9 @@ def find_source(slug: str) -> Optional[Path]:
     return next(SOURCES_DIR.glob(f"{slug}.*"), None)
 
 
-def cut_from_source(source: Path, quality: VideoQuality, output: Path) -> None:
+def cut_from_source(source: Path, quality: VideoQuality, output: Path, start: int) -> None:
     run_ffmpeg([
-        "-ss", str(CLIP_START_SECONDS), "-i", str(source), "-t", str(CLIP_SECONDS),
+        "-ss", str(start), "-i", str(source), "-t", str(CLIP_SECONDS),
         "-vf", f"scale=-2:{quality.height}",
         *ENCODE_ARGS, str(output),
     ])
@@ -73,22 +76,38 @@ def main() -> None:
     VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
     SOURCES_DIR.mkdir(parents=True, exist_ok=True)
 
-    for index, movie in enumerate(OPEN_MOVIES):
-        slug = slugify(movie[0])
-        source = find_source(slug)
+    slugs = [slugify(movie[0]) for movie in OPEN_MOVIES] + list(FOOTBALL_CLIPS)
+
+    # Real footage available in media/sources (the ad is not a movie clip)
+    available = [s for s in slugs if find_source(s)]
+    fallback = 0
+
+    for index, slug in enumerate(slugs):
+        source_slug = slug
+        if not find_source(slug) and available:
+            # No own source: borrow one of the real clips so no title shows a test pattern
+            source_slug = available[fallback % len(available)]
+            fallback += 1
+        source = find_source(source_slug)
+        start = 0 if source_slug in FOOTBALL_CLIPS else CLIP_START_SECONDS
         for quality in VideoQuality:
             output = VIDEOS_DIR / f"{slug}_{quality.value}.mp4"
             if source:
-                cut_from_source(source, quality, output)
+                cut_from_source(source, quality, output, start)
             else:
                 generate_placeholder(quality, hue=index * 50, output=output)
         print(f"{slug}: {'cut from ' + source.name if source else 'placeholder'}")
 
-    generate_placeholder(
-        VideoQuality.Q720P, hue=0, output=VIDEOS_DIR / "ad.mp4",
-        seconds=AD_SECONDS, pattern="smptebars",
-    )
-    print("ad: placeholder")
+    ad_source = find_source("ad")
+    if ad_source:
+        shutil.copyfile(ad_source, VIDEOS_DIR / "ad.mp4")
+        print(f"ad: copied from {ad_source.name}")
+    else:
+        generate_placeholder(
+            VideoQuality.Q720P, hue=0, output=VIDEOS_DIR / "ad.mp4",
+            seconds=AD_SECONDS, pattern="smptebars",
+        )
+        print("ad: placeholder")
 
 
 if __name__ == "__main__":

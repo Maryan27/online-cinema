@@ -83,8 +83,9 @@ def get_recommendation_service(db: Session = Depends(get_db)) -> RecommendationS
     return RecommendationService(
         history_repo,
         GenreBasedStrategy(history_repo, media_repo),
-        TopRatedStrategy(media_repo),
+        TopRatedStrategy(media_repo, history_repo),
     )
+
 def get_admin_service(db: Session = Depends(get_db)) -> AdminService:
     return AdminService(
         MediaRepository(db),

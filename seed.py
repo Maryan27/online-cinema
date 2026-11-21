@@ -51,6 +51,18 @@ FOOTBALL_MOVIES = [
      "A substitute striker gets one minute on the pitch to save his club from relegation.", 3),
     ("The Twelfth Man", 2019, 10, 7.5, ["Sports", "Comedy"], ["United Kingdom", "Spain"],
      "A stubborn fan swaps places with the coach of his favourite team for one match.", 0),
+    ("Golden Goal Night", 2024, 14, 7.7, ["Sports", "Drama"], ["Ukraine"],
+     "Two old rivals meet again in a cup final that is decided by a golden goal in extra time.", 2),
+    ("Offside Trap", 2022, 11, 7.2, ["Sports", "Comedy"], ["Spain"],
+     "A rookie linesman raises his flag once and turns a village derby into a national scandal.", 4),
+    ("Derby Night", 2020, 13, 7.6, ["Sports", "Action"], ["Brazil"],
+     "The fiercest derby in Rio is played on a night when nobody in the city is allowed to lose.", 5),
+    ("Golden Boot", 2023, 12, 6.9, ["Sports", "Drama"], ["USA"],
+     "A veteran striker chases the league scoring record in the last season of his career.", 1),
+    ("The Last Transfer", 2018, 10, 6.8, ["Sports", "Drama"], ["United Kingdom"],
+     "On deadline day an agent has twelve hours to close the deal that will save his career.", 6),
+    ("Underdogs", 2025, 12, 8.0, ["Sports", "Comedy"], ["Ukraine"],
+     "A school team from Lviv enters a national tournament with second-hand boots and big dreams.", 0),
 ]
 
 SERIES = {
@@ -66,6 +78,8 @@ SERIES = {
         ["Transfer Window", "Penalty Shootout", "Final Whistle"],
     ],
 }
+
+FOOTBALL_CLIPS = ["football-1", "football-2", "football-3"]
 
 VIEWERS = ["Goalkeeper", "Defender", "Midfielder", "Winger", "Striker", "Coach"]
 
@@ -86,7 +100,7 @@ def make_video_files(clip: str) -> list[VideoFile]:
 def seed() -> None:
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
-    random.seed(17) 
+    random.seed(17)
 
     with SessionLocal() as db:
         free_plan = SubscriptionPlan(type=PlanType.FREE, price_cents=0, duration_days=None)
@@ -96,8 +110,6 @@ def seed() -> None:
         genres = {name: Genre(name=name) for name in GENRES}
         countries = {name: Country(name=name) for name in COUNTRIES}
         db.add_all([*genres.values(), *countries.values()])
-
-        clips = [slugify(m[0]) for m in OPEN_MOVIES]
 
         def make_movie(title, year, minutes, rating, genre_names, country_names,
                        description, clip) -> Movie:
@@ -114,7 +126,10 @@ def seed() -> None:
             )
 
         movies = [make_movie(*m, clip=slugify(m[0])) for m in OPEN_MOVIES]
-        movies += [make_movie(*m[:7], clip=clips[m[7]]) for m in FOOTBALL_MOVIES]
+        movies += [
+            make_movie(*m[:7], clip=FOOTBALL_CLIPS[m[7] % len(FOOTBALL_CLIPS)])
+            for m in FOOTBALL_MOVIES
+        ]
         db.add_all(movies)
 
         series = Series(
@@ -131,7 +146,9 @@ def seed() -> None:
             season = series.add_season(season_number)
             for episode_number, title in enumerate(titles, start=1):
                 episode = season.add_episode(episode_number, title, duration_minutes=10)
-                episode.video_files = make_video_files(clips[len(episodes) % len(clips)])
+                episode.video_files = make_video_files(
+                    FOOTBALL_CLIPS[len(episodes) % len(FOOTBALL_CLIPS)]
+                )
                 episodes.append(episode)
         db.add(series)
 
@@ -186,7 +203,7 @@ def seed() -> None:
 
         create_user("admin@cinema.local", "admin123", "Administrator", role=Role.ADMIN)
 
-        create_user("user@cinema.local", "user123", "Demo User")
+        create_user("user@cinema.local", "user1234", "Demo User")
 
         premium_user = create_user(
             "premium@cinema.local", "premium123", "Premium User", premium=True

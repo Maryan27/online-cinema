@@ -1,11 +1,12 @@
 from pydantic import BaseModel, Field
 
 EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+PASSWORD_MIN_LENGTH = 8
 
 
 class RegisterRequest(BaseModel):
     email: str = Field(pattern=EMAIL_PATTERN, max_length=255)
-    password: str = Field(min_length=6, max_length=128)
+    password: str = Field(min_length=PASSWORD_MIN_LENGTH, max_length=128)
     name: str = Field(min_length=1, max_length=100)
 
 

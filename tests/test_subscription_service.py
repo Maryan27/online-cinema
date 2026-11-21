@@ -38,12 +38,18 @@ def make_service(db, gateway: PaymentGateway) -> SubscriptionService:
     )
 
 
+def run_out_of_time(db, user: User) -> None:
+    user.subscription.expires_at = utcnow() - timedelta(minutes=1)
+    db.commit()
+
+
 def test_successful_payment_upgrades_to_premium_and_records_payment(db):
     user = create_free_user(db)
 
     subscription = make_service(db, ApprovingGateway()).subscribe_premium(user)
 
     assert subscription.plan.type == PlanType.PREMIUM
+    assert subscription.auto_renew
     [payment] = PaymentRepository(db).get_all()
     assert payment.status == PaymentStatus.SUCCESS
     assert payment.transaction_id == "test-txn"
@@ -61,13 +67,52 @@ def test_failed_payment_keeps_free_and_records_failed_payment(db):
     assert payment.status == PaymentStatus.FAILED
 
 
-def test_overdue_premium_is_moved_to_free_on_access(db):
+def test_overdue_premium_with_auto_renewal_is_renewed_and_charged(db):
     user = create_free_user(db)
     service = make_service(db, ApprovingGateway())
     service.subscribe_premium(user)
-    user.subscription.expires_at = utcnow() - timedelta(minutes=1)  # time has run out
-    db.commit()
+    run_out_of_time(db, user)
 
     subscription = service.get_subscription(user)
 
+    assert subscription.plan.type == PlanType.PREMIUM
+    assert subscription.expires_at > utcnow()
+    assert len(PaymentRepository(db).get_all()) == 2
+
+
+def test_failed_renewal_moves_premium_to_free(db):
+    user = create_free_user(db)
+    make_service(db, ApprovingGateway()).subscribe_premium(user)
+    run_out_of_time(db, user)
+
+    subscription = make_service(db, DecliningGateway()).get_subscription(user)
+
     assert subscription.plan.type == PlanType.FREE
+    assert PaymentRepository(db).get_all()[-1].status == PaymentStatus.FAILED
+
+
+def test_cancelled_premium_lasts_until_the_end_and_is_not_renewed(db):
+    user = create_free_user(db)
+    service = make_service(db, ApprovingGateway())
+    service.subscribe_premium(user)
+
+    subscription = service.cancel(user)
+
+    assert subscription.plan.type == PlanType.PREMIUM  # the paid period is not lost
+    assert not subscription.auto_renew
+
+    run_out_of_time(db, user)
+    assert service.get_subscription(user).plan.type == PlanType.FREE
+    assert len(PaymentRepository(db).get_all()) == 1  # no renewal charge
+
+
+def test_subscribing_again_resumes_cancelled_premium_without_payment(db):
+    user = create_free_user(db)
+    service = make_service(db, ApprovingGateway())
+    service.subscribe_premium(user)
+    service.cancel(user)
+
+    subscription = service.subscribe_premium(user)
+
+    assert subscription.auto_renew
+    assert len(PaymentRepository(db).get_all()) == 1

@@ -18,12 +18,34 @@ function formatDate(value) {
   return value ? new Date(value).toLocaleDateString() : "—";
 }
 
+function renewalText(subscription) {
+  if (subscription.plan !== "premium") return "—";
+  return subscription.auto_renew
+    ? `Automatic on ${formatDate(subscription.expires_at)}`
+    : `Cancelled: Premium until ${formatDate(subscription.expires_at)}, then Free`;
+}
+
 function renderSubscription(subscription) {
   el.facts.innerHTML = `
     <dt>Current plan</dt><dd><span class="plan-badge ${subscription.plan}">${subscription.plan}</span></dd>
     <dt>Active until</dt><dd>${subscription.expires_at ? formatDate(subscription.expires_at) : "No end date"}</dd>
+    <dt>Renewal</dt><dd>${renewalText(subscription)}</dd>
     <dt>Ads</dt><dd>${subscription.requires_ad ? "Yes" : "No"}</dd>
     <dt>Max quality</dt><dd>${subscription.max_quality}</dd>`;
+}
+
+function planAction(plan, subscription) {
+  const onPremium = subscription.plan === "premium";
+  if (plan.type === "premium") {
+    if (!onPremium) return `<button class="btn" data-action="upgrade">Upgrade to Premium</button>`;
+    return subscription.auto_renew
+      ? `<button class="btn danger" data-action="cancel">Cancel Premium</button>`
+      : `<button class="btn" data-action="resume">Resume Premium</button>`;
+  }
+  if (!onPremium) return `<button class="btn secondary" disabled>Current plan</button>`;
+  return subscription.auto_renew
+    ? `<button class="btn secondary" disabled>Not active</button>`
+    : `<button class="btn secondary" disabled>From ${formatDate(subscription.expires_at)}</button>`;
 }
 
 function renderPlans(plans, subscription) {
@@ -32,19 +54,13 @@ function renderPlans(plans, subscription) {
       const current = plan.type === subscription.plan;
       const price = plan.price > 0 ? `${plan.price} UAH` : "Free";
       const period = plan.duration_days ? ` / ${plan.duration_days} days` : "";
-
-      let action;
-      if (current) action = `<button class="btn secondary" disabled>Current plan</button>`;
-      else if (plan.type === "premium") action = `<button class="btn" data-action="upgrade">Upgrade to Premium</button>`;
-      else action = `<button class="btn danger" data-action="cancel">Cancel Premium</button>`;
-
       const perks = PLAN_PERKS[plan.type].map((perk) => `<li>${perk}</li>`).join("");
       return `
         <div class="plan ${plan.type} ${current ? "current" : ""}">
           <div class="plan__name">${plan.type}</div>
           <div class="plan__price">${price}<span class="muted small">${period}</span></div>
           <ul>${perks}</ul>
-          ${action}
+          ${planAction(plan, subscription)}
         </div>`;
     })
     .join("");
@@ -63,7 +79,10 @@ el.plans.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
   if (!button) return;
   const action = button.dataset.action;
-  if (action === "cancel" && !confirm("Cancel Premium and go back to the Free plan?")) return;
+  if (
+    action === "cancel" &&
+    !confirm("Cancel Premium? It stays active until the end of the paid period and will not be renewed.")
+  ) return;
 
   button.disabled = true;
   el.subscriptionMessage.innerHTML = "";
@@ -71,9 +90,16 @@ el.plans.addEventListener("click", async (event) => {
     if (action === "upgrade") {
       await Api.post("/api/subscription/premium");
       UI.message(el.subscriptionMessage, "Payment approved. Welcome to Premium!", "success");
+    } else if (action === "resume") {
+      await Api.post("/api/subscription/premium");
+      UI.message(el.subscriptionMessage, "Auto-renewal is on again. No extra payment needed.", "success");
     } else {
-      await Api.delete("/api/subscription/premium");
-      UI.message(el.subscriptionMessage, "Premium cancelled. You are on the Free plan now.", "success");
+      const subscription = await Api.delete("/api/subscription/premium");
+      UI.message(
+        el.subscriptionMessage,
+        `Premium cancelled. It stays active until ${formatDate(subscription.expires_at)} and will not be renewed.`,
+        "success",
+      );
     }
     await loadSubscription();
     await renderHeader(); // refresh the plan badge in the header

@@ -52,12 +52,17 @@ async function loadCatalog() {
   }
 }
 
+const STRATEGY_LABELS = {
+  top_rated: "Top rated for new viewers",
+  genre_based: "Based on what you watched",
+  top_rated_fallback: "Top rated you haven't seen yet",
+};
+
 async function loadRecommendations() {
   const data = await Api.get("/api/users/me/recommendations?limit=6");
   if (!data.items.length) return;
   el.recommendationsGrid.innerHTML = data.items.map(UI.card).join("");
-  el.strategyTag.textContent =
-    data.strategy === "genre_based" ? "Based on what you watched" : "Top rated for new viewers";
+  el.strategyTag.textContent = STRATEGY_LABELS[data.strategy] || "Recommended";
   el.recommendations.classList.remove("hidden");
 }
 

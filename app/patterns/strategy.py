@@ -20,15 +20,19 @@ class RecommendationStrategy(ABC):
 
 
 class TopRatedStrategy(RecommendationStrategy):
-    """Concrete Strategy: the highest-rated media. Used when nothing is known about the user."""
+    """Concrete Strategy: the highest-rated media the user has not watched yet."""
 
     name = "top_rated"
 
-    def __init__(self, media_repo: "MediaRepository"):
+    def __init__(self, media_repo: "MediaRepository", history_repo: "WatchHistoryRepository"):
         self.media_repo = media_repo
+        self.history_repo = history_repo
 
     def recommend(self, user, limit) -> list["MediaContent"]:
-        return self.media_repo.top_rated(limit)
+        watched_ids = {entry.media.id for entry in self.history_repo.list_by_user(user.id)}
+        items = self.media_repo.top_rated(limit, exclude_ids=watched_ids)
+        # The user has watched the whole catalog: show the best titles anyway
+        return items or self.media_repo.top_rated(limit)
 
 
 class GenreBasedStrategy(RecommendationStrategy):

@@ -1,83 +1,118 @@
-from app.models import Genre, Movie, User, WatchHistory
-from app.models.enums import VideoQuality
-from app.patterns.strategy import GenreBasedStrategy, TopRatedStrategy
-from app.repositories import MediaRepository, WatchHistoryRepository
-from app.services.recommendation import RecommendationService
+from datetime import timedelta
+from decimal import Decimal
+
+import pytest
+
+from app.models import Subscription, SubscriptionPlan, User
+from app.models.common import utcnow
+from app.models.enums import PaymentStatus, PlanType
+from app.patterns.adapter import PaymentGateway, PaymentResult
+from app.repositories import PaymentRepository, PlanRepository, SubscriptionRepository
+from app.services.exceptions import BusinessRuleError
+from app.services.subscription import SubscriptionService
 
 
-def create_catalog(db):
-    sports, drama = Genre(name="Sports"), Genre(name="Drama")
-    movies = {
-        "Derby Day": Movie(title="Derby Day", release_year=2020, duration_minutes=90,
-                           rating=7.0, genres=[sports]),
-        "Golden Boot": Movie(title="Golden Boot", release_year=2021, duration_minutes=95,
-                             rating=8.0, genres=[sports]),
-        "Rainy Tuesday": Movie(title="Rainy Tuesday", release_year=2019, duration_minutes=100,
-                               rating=9.5, genres=[drama]),
-    }
+class ApprovingGateway(PaymentGateway):
+    def charge(self, user: User, amount: Decimal) -> PaymentResult:
+        return PaymentResult(True, "test-txn", "Payment approved")
+
+
+class DecliningGateway(PaymentGateway):
+    def charge(self, user: User, amount: Decimal) -> PaymentResult:
+        return PaymentResult(False, None, "Card was declined")
+
+
+def create_free_user(db) -> User:
+    free_plan = SubscriptionPlan(type=PlanType.FREE, price_cents=0, duration_days=None)
+    premium_plan = SubscriptionPlan(type=PlanType.PREMIUM, price_cents=9900, duration_days=30)
     user = User(email="fan@cinema.local", password_hash="x", name="Fan")
-    db.add_all([*movies.values(), user])
+    user.subscription = Subscription(plan=free_plan)
+    db.add_all([free_plan, premium_plan, user])
     db.commit()
-    return user, movies
+    return user
 
 
-def watch(db, user, movie):
-    db.add(WatchHistory(user=user, movie=movie, quality=VideoQuality.Q720P))
-    db.commit()
-
-
-def make_service(db) -> RecommendationService:
-    media_repo, history_repo = MediaRepository(db), WatchHistoryRepository(db)
-    return RecommendationService(
-        history_repo,
-        GenreBasedStrategy(history_repo, media_repo),
-        TopRatedStrategy(media_repo),
+def make_service(db, gateway: PaymentGateway) -> SubscriptionService:
+    return SubscriptionService(
+        gateway, SubscriptionRepository(db), PlanRepository(db), PaymentRepository(db)
     )
 
 
-def test_top_rated_strategy_orders_by_rating(db):
-    user, _ = create_catalog(db)
-
-    result = TopRatedStrategy(MediaRepository(db)).recommend(user, limit=2)
-
-    assert [m.title for m in result] == ["Rainy Tuesday", "Golden Boot"]
+def run_out_of_time(db, user: User) -> None:
+    user.subscription.expires_at = utcnow() - timedelta(minutes=1)
+    db.commit()
 
 
-def test_genre_based_strategy_recommends_unwatched_media_of_watched_genres(db):
-    user, movies = create_catalog(db)
-    watch(db, user, movies["Derby Day"])
-    strategy = GenreBasedStrategy(WatchHistoryRepository(db), MediaRepository(db))
+def test_successful_payment_upgrades_to_premium_and_records_payment(db):
+    user = create_free_user(db)
 
-    result = strategy.recommend(user, limit=10)
+    subscription = make_service(db, ApprovingGateway()).subscribe_premium(user)
 
-    # Same genre, not watched yet; the higher-rated drama is not recommended
-    assert [m.title for m in result] == ["Golden Boot"]
-
-
-def test_service_uses_top_rated_for_user_without_history(db):
-    user, _ = create_catalog(db)
-
-    strategy, items = make_service(db).get_recommendations(user)
-
-    assert strategy == "top_rated"
-    assert items[0].title == "Rainy Tuesday"
+    assert subscription.plan.type == PlanType.PREMIUM
+    assert subscription.auto_renew
+    [payment] = PaymentRepository(db).get_all()
+    assert payment.status == PaymentStatus.SUCCESS
+    assert payment.transaction_id == "test-txn"
+    assert payment.amount_cents == 9900
 
 
-def test_service_switches_to_genre_based_after_watching(db):
-    user, movies = create_catalog(db)
-    watch(db, user, movies["Derby Day"])
+def test_failed_payment_keeps_free_and_records_failed_payment(db):
+    user = create_free_user(db)
 
-    strategy, items = make_service(db).get_recommendations(user)
+    with pytest.raises(BusinessRuleError):
+        make_service(db, DecliningGateway()).subscribe_premium(user)
 
-    assert strategy == "genre_based"
-    assert [m.title for m in items] == ["Golden Boot"]
+    assert user.subscription.plan.type == PlanType.FREE
+    [payment] = PaymentRepository(db).get_all()
+    assert payment.status == PaymentStatus.FAILED
 
 
-def test_service_falls_back_to_top_rated_when_nothing_new_in_genres(db):
-    user, movies = create_catalog(db)
-    watch(db, user, movies["Derby Day"])
-    watch(db, user, movies["Golden Boot"])
+def test_overdue_premium_with_auto_renewal_is_renewed_and_charged(db):
+    user = create_free_user(db)
+    service = make_service(db, ApprovingGateway())
+    service.subscribe_premium(user)
+    run_out_of_time(db, user)
 
-    strategy, _ = make_service(db).get_recommendations(user)
+    subscription = service.get_subscription(user)
 
-    assert strategy == "top_rated"
+    assert subscription.plan.type == PlanType.PREMIUM
+    assert subscription.expires_at > utcnow()
+    assert len(PaymentRepository(db).get_all()) == 2
+
+
+def test_failed_renewal_moves_premium_to_free(db):
+    user = create_free_user(db)
+    make_service(db, ApprovingGateway()).subscribe_premium(user)
+    run_out_of_time(db, user)
+
+    subscription = make_service(db, DecliningGateway()).get_subscription(user)
+
+    assert subscription.plan.type == PlanType.FREE
+    assert PaymentRepository(db).get_all()[-1].status == PaymentStatus.FAILED
+
+
+def test_cancelled_premium_lasts_until_the_end_and_is_not_renewed(db):
+    user = create_free_user(db)
+    service = make_service(db, ApprovingGateway())
+    service.subscribe_premium(user)
+
+    subscription = service.cancel(user)
+
+    assert subscription.plan.type == PlanType.PREMIUM  # the paid period is not lost
+    assert not subscription.auto_renew
+
+    run_out_of_time(db, user)
+    assert service.get_subscription(user).plan.type == PlanType.FREE
+    assert len(PaymentRepository(db).get_all()) == 1  # no renewal charge
+
+
+def test_subscribing_again_resumes_cancelled_premium_without_payment(db):
+    user = create_free_user(db)
+    service = make_service(db, ApprovingGateway())
+    service.subscribe_premium(user)
+    service.cancel(user)
+
+    subscription = service.subscribe_premium(user)
+
+    assert subscription.auto_renew
+    assert len(PaymentRepository(db).get_all()) == 1
