@@ -31,7 +31,6 @@ class TopRatedStrategy(RecommendationStrategy):
     def recommend(self, user, limit) -> list["MediaContent"]:
         watched_ids = {entry.media.id for entry in self.history_repo.list_by_user(user.id)}
         items = self.media_repo.top_rated(limit, exclude_ids=watched_ids)
-        # The user has watched the whole catalog: show the best titles anyway
         return items or self.media_repo.top_rated(limit)
 
 
@@ -56,7 +55,6 @@ class GenreBasedStrategy(RecommendationStrategy):
         candidates = self.media_repo.find_by_genres(
             favourite_genres, limit=CANDIDATES_LIMIT, exclude_ids=watched_ids
         )
-        # Best genre match first, then higher rating
         candidates.sort(
             key=lambda m: (sum(genre_counts[g.id] for g in m.genres), m.rating),
             reverse=True,

@@ -31,7 +31,6 @@ class Favorite(Base):
 class WatchHistory(Base):
     __tablename__ = "watch_history"
     __table_args__ = (
-        # A history entry refers to exactly one playable item: a movie or an episode
         CheckConstraint(
             "(movie_id IS NULL) <> (episode_id IS NULL)",
             name="ck_watch_history_single_playable",
